@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LPIC-1 Topic 104.5 - File Permissions and Ownership</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f9; margin: 0; padding: 20px; line-height: 1.6; }
+    h1, h2 { color: #2c3e50; }
+    pre, code { background: #eee; padding: 5px; border-radius: 4px; display: block; margin: 10px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #aaa; padding: 8px; text-align: left; }
+    th { background: #3498db; color: white; }
+    section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+
+<h1>📚 LPIC-1 Topic 104.5: Manage File Permissions and Ownership</h1>
+
+<section>
+<h2>📂 1. Understanding Permissions (Symbolic & Octal)</h2>
+<p>Each file and directory has three sets of permissions:</p>
+<ul>
+  <li><strong>User (u)</strong> – File owner</li>
+  <li><strong>Group (g)</strong> – Users in the file's group</li>
+  <li><strong>Others (o)</strong> – All other users</li>
+</ul>
+
+<pre><code>ls -l</code></pre>
+<pre><code>-rwxr-xr-- 1 alice staff 1234 Apr 1 14:00 script.sh</code></pre>
+
+<p>In this example:</p>
+<ul>
+  <li><code>rwx</code> → owner has read/write/execute</li>
+  <li><code>r-x</code> → group has read/execute</li>
+  <li><code>r--</code> → others have read only</li>
+</ul>
+</section>
+
+<section>
+<h2>🔢 2. Octal and Symbolic Notation</h2>
+<p><strong>Octal Permissions:</strong></p>
+<table>
+<tr><th>Octal</th><th>Symbolic</th><th>Description</th></tr>
+<tr><td>7</td><td>rwx</td><td>Read, Write, Execute</td></tr>
+<tr><td>6</td><td>rw-</td><td>Read, Write</td></tr>
+<tr><td>5</td><td>r-x</td><td>Read, Execute</td></tr>
+<tr><td>4</td><td>r--</td><td>Read only</td></tr>
+<tr><td>0</td><td>---</td><td>No permissions</td></tr>
+</table>
+
+<pre><code>
+chmod 755 file       # rwxr-xr-x
+chmod 644 file       # rw-r--r--
+chmod u+x file       # Add execute to user
+chmod g-w file       # Remove write from group
+chmod o=r file       # Others: read only
+</code></pre>
+</section>
+
+<section>
+<h2>⚙️ 3. Changing Ownership</h2>
+<pre><code>sudo chown bob file
+sudo chgrp developers file
+sudo chown alice:staff file</code></pre>
+</section>
+
+<section>
+<h2>🔒 4. Special Permissions</h2>
+<ul>
+  <li><strong>SUID</strong>: Executes with owner’s privileges</li>
+  <li><strong>SGID</strong>: Inherits group for new files or executes as group</li>
+  <li><strong>Sticky Bit</strong>: Restricts deletion in shared dirs like /tmp</li>
+</ul>
+
+<pre><code>
+chmod u+s file          # Set SUID
+chmod g+s file          # Set SGID
+chmod +t /shared/dir    # Set sticky bit
+</code></pre>
+
+<p>Results in:</p>
+<pre><code>
+-rwsr-xr-x file      # SUID (s in user exec)
+drwxrwsr-x dir       # SGID (s in group exec)
+drwxrwxrwt dir       # Sticky Bit (t in others exec)
+</code></pre>
+</section>
+
+<section>
+<h2>🧪 5. More Examples</h2>
+<pre><code>
+chmod 2755 script.sh            # SGID + rwxr-xr-x
+chmod 4775 secure.sh            # SUID + rwxrwxr-x
+chmod 1777 /tmp                 # Sticky Bit + full access
+chmod u=rwx,g=rx,o=r file.txt   # symbolic mode
+chmod -R u+w docs/              # recursively add write for owner
+</code></pre>
+</section>
+
+<section>
+<h2>✅ Summary: Special Bits</h2>
+<table>
+<tr><th>Prefix</th><th>Meaning</th></tr>
+<tr><td>4xxx</td><td>SUID</td></tr>
+<tr><td>2xxx</td><td>SGID</td></tr>
+<tr><td>1xxx</td><td>Sticky Bit</td></tr>
+</table>
+</section>
+
+</body>
+</html>
