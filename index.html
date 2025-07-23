@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LPIC-1 Topic 104.5 - File Permissions & Ownership</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #2a4365;
+    }
+    section {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+    }
+    code, pre {
+      background: #eee;
+      padding: 0.5rem;
+      display: block;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    ul {
+      padding-left: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📘 LPIC-1 Topic 104.5 – Manage File Permissions and Ownership</h1>
+
+  <section>
+    <h2>🔍 Step 1: File Metadata and Types</h2>
+    <ul>
+      <li>Owner</li>
+      <li>Group</li>
+      <li>Permissions</li>
+    </ul>
+    <pre><code>ls -l /etc/passwd
+stat filename</code></pre>
+    <p><strong>File Types:</strong> -, d, l, b, c</p>
+  </section>
+
+  <section>
+    <h2>🔐 Step 2: Understanding Permissions</h2>
+    <p><code>-rwxr-xr--</code></p>
+    <table>
+      <tr><th>Entity</th><th>Permissions</th><th>Binary</th><th>Octal</th></tr>
+      <tr><td>User</td><td>rwx</td><td>111</td><td>7</td></tr>
+      <tr><td>Group</td><td>r-x</td><td>101</td><td>5</td></tr>
+      <tr><td>Others</td><td>r--</td><td>100</td><td>4</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>✏️ Step 3: Modify Permissions</h2>
+    <p>Symbolic:</p>
+    <pre><code>chmod u+x script.sh
+chmod g-w notes.txt</code></pre>
+    <p>Numeric:</p>
+    <pre><code>chmod 644 file.txt
+chmod 751 file.sh</code></pre>
+  </section>
+
+  <section>
+    <h2>👤 Step 4: Modify Ownership and Groups</h2>
+    <pre><code>chown ashraf file.txt
+chgrp students file.txt</code></pre>
+    <p><strong>Note:</strong> Only <code>root</code> can use <code>chown</code></p>
+  </section>
+
+  <section>
+    <h2>🔒 Step 5: Special Permissions</h2>
+    <table>
+      <tr><th>Mode</th><th>Symbol</th><th>Description</th></tr>
+      <tr><td>Setuid</td><td>s</td><td>Run as owner</td></tr>
+      <tr><td>Setgid</td><td>s</td><td>Run as group</td></tr>
+      <tr><td>Sticky</td><td>t</td><td>Only owner can delete in shared dirs</td></tr>
+    </table>
+    <pre><code>chmod +s /usr/bin/test
+chmod +t /tmp</code></pre>
+  </section>
+
+  <section>
+    <h2>🧮 Step 6: Default Permissions (umask)</h2>
+    <pre><code>umask
+umask 027</code></pre>
+    <table>
+      <tr><th>Umask</th><th>Dir</th><th>File</th></tr>
+      <tr><td>022</td><td>755</td><td>644</td></tr>
+      <tr><td>027</td><td>750</td><td>640</td></tr>
+      <tr><td>077</td><td>700</td><td>600</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>🧪 Step 7: Final Quiz</h2>
+    <p><strong>Q:</strong> What does <code>chmod 750</code> do?</p>
+    <ul>
+      <li>Owner: rwx</li>
+      <li>Group: r-x</li>
+      <li>Others: ---</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>✅ Summary</h2>
+    <p>You've just explored LPIC-1 Topic 104.5 with a modern, interactive format. Use this page as a revision tool or study booster before the exam.</p>
+  </section>
+
+</body>
+</html>
