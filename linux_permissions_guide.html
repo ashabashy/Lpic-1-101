@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux File Permissions & Ownership - Interactive Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+            margin: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            z-index: 0;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 300;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #34495e;
+            padding: 0;
+            margin: 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 20px;
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            position: relative;
+        }
+
+        .tab-button:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .tab-button.active {
+            color: white;
+            background: rgba(52, 152, 219, 0.2);
+            border-bottom-color: #3498db;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Permission Visual Styles */
+        .permission-visual {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .ls-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ls-output::before {
+            content: '$ ls -l';
+            position: absolute;
+            top: -5px;
+            left: 20px;
+            background: #3498db;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 0 0 10px 10px;
+            font-size: 12px;
+        }
+
+        .clickable-part {
+            display: inline-block;
+            padding: 2px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .clickable-part:hover {
+            background: rgba(52, 152, 219, 0.2);
+            border-color: #3498db;
+            transform: scale(1.05);
+        }
+
+        .permission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .permission-card {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .permission-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border-color: #3498db;
+        }
+
+        .card-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: white;
+        }
+
+        .read-icon { background: #27ae60; }
+        .write-icon { background: #e74c3c; }
+        .execute-icon { background: #f39c12; }
+
+        .special-permission-card {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+        }
+
+        .command-showcase {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .command-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+
+        .command-example {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid #3498db;
+        }
+
+        .interactive-calculator {
+            background: linear-gradient(135deg, #e8f5e8, #d5f4e6);
+            border: 3px solid #27ae60;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .calc-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .permission-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .permission-group {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .permission-group h3 {
+            margin-bottom: 15px;
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .result-display {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1000;
+            max-width: 300px;
+            display: none;
+        }
+
+        .security-warning {
+            background: linear-gradient(135deg, #fff5f5, #ffe6e6);
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .security-warning h3 {
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+
+        .best-practices {
+            background: linear-gradient(135deg, #f0f8ff, #e6f3ff);
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .best-practices h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+
+        .animation-demo {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .chmod-animation {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px;
+            transition: all 0.5s ease;
+        }
+
+        .chmod-animation.highlight {
+            background: #3498db;
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .permission-checkboxes {
+                grid-template-columns: 1fr;
+            }
+            
+            .permission-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>🔐 Linux File Permissions & Ownership</h1>
+                <p>LPIC-1 v5.0 Exam 101 - Objective 104.5 | Interactive Learning Experience</p>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-button active" onclick="switchTab('basics')">📋 Permission Basics</button>
+            <button class="tab-button" onclick="switchTab('commands')">⚙️ Commands & Examples</button>
+            <button class="tab-button" onclick="switchTab('calculator')">🧮 Permission Calculator</button>
+            <button class="tab-button" onclick="switchTab('special')">⭐ Special Permissions</button>
+            <button class="tab-button" onclick="switchTab('security')">🔒 Security & Tips</button>
+        </div>
+
+        <!-- Permission Basics Tab -->
+        <div id="basics" class="tab-content active">
+            <h2 style="color: #2c3e50; margin-bottom: 30px;">🎯 Understanding Linux File Permissions</h2>
+            
+            <div class="permission-visual">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #3498db;">Interactive ls -l Output</h3>
+                <div class="ls-output" style="padding-top: 40px;">
+                    <span class="clickable-part" data-tooltip="File Type Indicator|&bull; - = Regular file|&bull; d = Directory|&bull; l = Symbolic link|&bull; b = Block device|&bull; c = Character device|&bull; s = Socket" style="color: #e74c3c; font-weight: bold;">-</span><span class="clickable-part" data-tooltip="User/Owner Permissions|&bull; r = Read (4) - Can view file contents|&bull; w = Write (2) - Can modify/delete file|&bull; x = Execute (1) - Can run file as program|&bull; Total: 4+2+1 = 7" style="color: #27ae60; font-weight: bold;">rwx</span><span class="clickable-part" data-tooltip="Group Permissions|&bull; r = Read (4) - Group members can view|&bull; w = Write (2) - Group members can modify|&bull; x = Execute (1) - Group members can execute|&bull; Total: 4+2+1 = 7" style="color: #f39c12; font-weight: bold;">rwx</span><span class="clickable-part" data-tooltip="Others Permissions|&bull; r = Read (4) - Everyone else can view|&bull; - = No write permission|&bull; - = No execute permission|&bull; Total: 4+0+0 = 4" style="color: #9b59b6; font-weight: bold;">r--</span> <span style="color: #95a5a6;">1</span> <span class="clickable-part" data-tooltip="File Owner: carol|&bull; The user who owns this file|&bull; Only the owner (or root) can change permissions|&bull; Only owner can change file ownership|&bull; Has the first set of permissions (rwx)" style="color: #3498db; font-weight: bold;">carol</span> <span class="clickable-part" data-tooltip="File Group: developers|&bull; The group that owns this file|&bull; All members of 'developers' group have the second set of permissions (rwx)|&bull; Enables team collaboration|&bull; Shared access with team members" style="color: #3498db; font-weight: bold;">developers</span> <span style="color: #95a5a6;">765 Dec 20 21:25</span> <span class="clickable-part" data-tooltip="Filename: myfile.txt|&bull; The actual name of the file|&bull; Regular file (not directory)|&bull; Text file based on .txt extension|&bull; Owned by carol:developers|&bull; Permissions: 774 (rwxrwxr--)" style="color: #ecf0f1; font-weight: bold;">myfile.txt</span>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="color: #7f8c8d; font-size: 1em;"><em>👆 Click or hover on any <strong style="color: #e74c3c;">colored parts</strong> above to see detailed explanations!</em></p>
+                    <p style="color: #95a5a6; font-size: 0.9em; margin-top: 10px;">💡 Pro tip: The number <strong>1</strong> shows hard links, <strong>765</strong> is file size in bytes</p>
+                </div>
+            </div>
+
+            <div class="permission-grid">
+                <div class="permission-card" onclick="animateCard(this)">
+                    <div class="card-header">
+                        <div class="card-icon read-icon">R</div>
+                        Read Permission (r = 4)
+                    </div>
+                    <div>
+                        <strong>Files:</strong> View file contents<br>
+                        <strong>Directories:</strong> List filenames with <code>ls</code><br>
+                        <strong>Example:</strong> <code>cat file.txt</code>
+                    </div>
+                </div>
+
+                <div class="permission-card" onclick="animateCard(this)">
+                    <div class="card-header">
+                        <div class="card-icon write-icon">W</div>
+                        Write Permission (w = 2)
+                    </div>
+                    <div>
+                        <strong>Files:</strong> Edit, delete file<br>
+                        <strong>Directories:</strong> Create/delete files inside<br>
+                        <strong>Example:</strong> <code>echo "text" > file.txt</code>
+                    </div>
+                </div>
+
+                <div class="permission-card" onclick="animateCard(this)">
+                    <div class="card-header">
+                        <div class="card-icon execute-icon">X</div>
+                        Execute Permission (x = 1)
+                    </div>
+                    <div>
+                        <strong>Files:</strong> Run executable/script<br>
+                        <strong>Directories:</strong> Enter with <code>cd</code><br>
+                        <strong>Example:</strong> <code>./script.sh</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="best-practices">
+                <h3>💡 Key Principles</h3>
+                <ul>
+                    <li><strong>3-Layer System:</strong> Owner → Group → Others (in that priority order)</li>
+                    <li><strong>Directory Rule:</strong> Must have execute (x) permission to access files inside</li>
+                    <li><strong>Permission Check:</strong> System checks owner first, then group, then others</li>
+                    <li><strong>Common Values:</strong> 755 (scripts), 644 (files), 600 (private files)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Commands & Examples Tab -->
+        <div id="commands" class="tab-content">
+            <h2 style="color: #2c3e50; margin-bottom: 30px;">⚙️ chmod, chown & Essential Commands</h2>
+
+            <div class="command-showcase">
+                <div class="command-title">🔧 chmod - Change Permissions</div>
+                
+                <h4 style="color: #3498db; margin: 20px 0 10px 0;">Symbolic Mode (Fine-grained control)</h4>
+                <div class="command-example">
+                    chmod u+rwx file.txt      # Add all permissions for user<br>
+                    chmod g-w,o=r file.txt    # Remove group write, set others read-only<br>
+                    chmod a+x script.sh       # Add execute for all (user, group, others)
+                </div>
+
+                <h4 style="color: #3498db; margin: 20px 0 10px 0;">Octal Mode (Set all at once)</h4>
+                <div class="command-example">
+                    chmod 755 script.sh       # rwxr-xr-x (standard script)<br>
+                    chmod 644 document.txt    # rw-r--r-- (standard document)<br>
+                    chmod 600 private.key     # rw------- (private file)
+                </div>
+
+                <h4 style="color: #3498db; margin: 20px 0 10px 0;">Recursive Operations</h4>
+                <div class="command-example">
+                    chmod -R 755 /project     # Apply to directory and all contents<br>
+                    chmod -R u+rwX /shared    # X = execute only if already set or directory
+                </div>
+            </div>
+
+            <div class="command-showcase">
+                <div class="command-title">👤 chown & chgrp - Change Ownership</div>
+                
+                <div class="command-example">
+                    chown user:group file.txt         # Change both user and group<br>
+                    chown :staff file.txt             # Change group only<br>
+                    chown admin file.txt              # Change user only<br>
+                    chown -R admin:developers /proj   # Recursive ownership change<br><br>
+                    chgrp developers file.txt         # Alternative: change group only
+                </div>
+            </div>
+
+            <div class="command-showcase">
+                <div class="command-title">🔍 Information & Diagnostics</div>
+                
+                <div class="command-example">
+                    ls -l file.txt              # View file permissions<br>
+                    ls -ld directory            # View directory permissions (not contents)<br>
+                    ls -la                      # Include hidden files (.files)<br>
+                    getent group                # List all system groups<br>
+                    groups username             # Show user's groups<br>
+                    id username                 # Show user/group IDs and memberships
+                </div>
+            </div>
+
+            <div class="animation-demo">
+                <h3 style="color: #2c3e50; margin-bottom: 20px;">🎬 Live chmod Demo</h3>
+                <button onclick="startChmodDemo()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-bottom: 20px;">▶️ Watch chmod 755 in Action</button>
+                <div id="chmod-demo" style="margin-top: 20px;">
+                    <div class="chmod-animation" id="demo-before">-rw-r--r--</div>
+                    <div style="margin: 20px 0; font-size: 1.1em; color: #2c3e50;">chmod 755 myfile.txt</div>
+                    <div class="chmod-animation" id="demo-after">-rwxr-xr-x</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permission Calculator Tab -->
+        <div id="calculator" class="tab-content">
+            <h2 style="color: #2c3e50; margin-bottom: 30px;">🧮 Interactive Permission Calculator</h2>
+
+            <div class="interactive-calculator">
+                <div class="calc-title">✨ Build Your Perfect Permission Set</div>
+                
+                <div class="permission-checkboxes">
+                    <div class="permission-group">
+                        <h3 style="color: #e74c3c;">👑 Owner (User)</h3>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="u-r" onchange="updateCalculator()">
+                                <label for="u-r">Read (4)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="u-w" onchange="updateCalculator()">
+                                <label for="u-w">Write (2)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="u-x" onchange="updateCalculator()">
+                                <label for="u-x">Execute (1)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="permission-group">
+                        <h3 style="color: #f39c12;">👥 Group</h3>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="g-r" onchange="updateCalculator()">
+                                <label for="g-r">Read (4)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="g-w" onchange="updateCalculator()">
+                                <label for="g-w">Write (2)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="g-x" onchange="updateCalculator()">
+                                <label for="g-x">Execute (1)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="permission-group">
+                        <h3 style="color: #9b59b6;">🌍 Others</h3>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="o-r" onchange="updateCalculator()">
+                                <label for="o-r">Read (4)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="o-w" onchange="updateCalculator()">
+                                <label for="o-w">Write (2)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="o-x" onchange="updateCalculator()">
+                                <label for="o-x">Execute (1)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-display" id="calc-result">
+                    Symbolic: ----------<br>
+                    Octal: 000<br>
+                    Command: chmod 000 filename
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button onclick="setCommonPermission(755)" style="background: #27ae60; color: white; border: none; padding: 10px 15px; margin: 5px; border-radius: 5px; cursor: pointer;">755 (Script)</button>
+                    <button onclick="setCommonPermission(644)" style="background: #3498db; color: white; border: none; padding: 10px 15px; margin: 5px; border-radius: 5px; cursor: pointer;">644 (Document)</button>
+                    <button onclick="setCommonPermission(600)" style="background: #e74c3c; color: white; border: none; padding: 10px 15px; margin: 5px; border-radius: 5px; cursor: pointer;">600 (Private)</button>
+                    <button onclick="setCommonPermission(777)" style="background: #f39c12; color: white; border: none; padding: 10px 15px; margin: 5px; border-radius: 5px; cursor: pointer;">777 (Full Access)</button>
+                </div>
+            </div>
+
+            <div class="command-showcase">
+                <div class="command-title">🎯 umask - Default Permissions</div>
+                <div class="command-example">
+                    umask                    # View current umask (e.g., 0022)<br>
+                    umask 0077              # Set restrictive umask (owner-only)<br>
+                    umask -S                # View in symbolic format<br><br>
+                    # How umask works:<br>
+                    # Files: 666 - umask = actual permissions<br>
+                    # Directories: 777 - umask = actual permissions
+                </div>
+            </div>
+        </div>
+
+        <!-- Special Permissions Tab -->
+        <div id="special" class="tab-content">
+            <h2 style="color: #2c3e50; margin-bottom: 30px;">⭐ Special Permissions: SUID, SGID & Sticky Bit</h2>
+
+            <div class="permission-visual">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #3498db;">Understanding Special Permissions</h3>
+                <p style="text-align: center; color: #7f8c8d; margin-bottom: 30px;">
+                    Special permissions modify the standard rwx behavior to provide enhanced security and collaboration features.
+                    <br>They appear as <strong>s</strong> (SUID/SGID) or <strong>t</strong> (sticky bit) in place of the execute permission.
+                </p>
+            </div>
+
+            <div class="permission-grid">
+                <div class="permission-card special-permission-card" onclick="showSpecialExample('suid')">
+                    <div class="card-header" style="color: white;">
+                        <div class="card-icon" style="background: rgba(255,255,255,0.2);">S</div>
+                        SUID (Set User ID) - Octal: 4000
+                    </div>
+                    <div style="color: rgba(255,255,255,0.9); line-height: 1.6;">
+                        <strong>🎯 What it does:</strong> Run file with owner's privileges (not executor's)<br>
+                        <strong>📍 When to use:</strong> System utilities that need root access<br>
+                        <strong>🔍 Visual:</strong> 's' replaces 'x' in user permissions<br>
+                        <strong>⚠️ Security:</strong> High risk - audit regularly<br>
+                        <strong>💡 Example:</strong> passwd command needs to edit /etc/shadow
+                    </div>
+                </div>
+
+                <div class="permission-card special-permission-card" onclick="showSpecialExample('sgid')" style="background: linear-gradient(135deg, #27ae60, #2ecc71);">
+                    <div class="card-header" style="color: white;">
+                        <div class="card-icon" style="background: rgba(255,255,255,0.2);">G</div>
+                        SGID (Set Group ID) - Octal: 2000
+                    </div>
+                    <div style="color: rgba(255,255,255,0.9); line-height: 1.6;">
+                        <strong>🎯 What it does:</strong> Files run as file's group; directories inherit group<br>
+                        <strong>📍 When to use:</strong> Team projects, shared directories<br>
+                        <strong>🔍 Visual:</strong> 's' replaces 'x' in group permissions<br>
+                        <strong>✅ Benefit:</strong> Automatic group ownership for collaboration<br>
+                        <strong>💡 Example:</strong> /var/mail directory for email sharing
+                    </div>
+                </div>
+
+                <div class="permission-card special-permission-card" onclick="showSpecialExample('sticky')" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                    <div class="card-header" style="color: white;">
+                        <div class="card-icon" style="background: rgba(255,255,255,0.2);">T</div>
+                        Sticky Bit - Octal: 1000
+                    </div>
+                    <div style="color: rgba(255,255,255,0.9); line-height: 1.6;">
+                        <strong>🎯 What it does:</strong> Only file owner can delete/rename files<br>
+                        <strong>📍 When to use:</strong> Shared temp directories, public folders<br>
+                        <strong>🔍 Visual:</strong> 't' replaces 'x' in others permissions<br>
+                        <strong>🛡️ Security:</strong> Prevents deletion by other users<br>
+                        <strong>💡 Example:</strong> /tmp directory for temporary files
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Explanations -->
+            <div class="command-showcase">
+                <div class="command-title">🧠 Deep Dive: When & Why to Use Special Permissions</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 25px; margin: 25px 0;">
+                    
+                    <!-- SUID Detailed Explanation -->
+                    <div style="background: linear-gradient(135deg, #fff5f5, #ffe6e6); border: 2px solid #e74c3c; border-radius: 15px; padding: 25px;">
+                        <h3 style="color: #e74c3c; margin-bottom: 15px;">🔐 SUID (Set User ID) - The Privilege Escalator</h3>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">🤔 What Problem Does SUID Solve?</h4>
+                            <p style="color: #34495e; line-height: 1.6;">Imagine you need to change your password. The <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px; color: #e74c3c;">passwd</code> command must edit <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px; color: #e74c3c;">/etc/shadow</code> (owned by root), but you're just a regular user. SUID allows the passwd program to temporarily "become" root when you run it.</p>
+                        </div>
+
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">📋 Real-World SUID Examples:</h4>
+                            <ul style="color: #34495e; line-height: 1.6;">
+                                <li><strong style="color: #2c3e50;">/usr/bin/passwd</strong> - Users can change passwords (needs root to edit /etc/shadow)</li>
+                                <li><strong style="color: #2c3e50;">/usr/bin/sudo</strong> - Execute commands as other users</li>
+                                <li><strong style="color: #2c3e50;">/usr/bin/su</strong> - Switch user identity</li>
+                                <li><strong style="color: #2c3e50;">/bin/ping</strong> - Send ICMP packets (needs raw socket access)</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">⚠️ When NOT to Use SUID:</h4>
+                            <ul style="color: #34495e; line-height: 1.6;">
+                                <li>On shell scripts (security risk - can be exploited)</li>
+                                <li>On files owned by regular users (defeats the purpose)</li>
+                                <li>On world-writable files (anyone can modify and gain privileges)</li>
+                                <li>When simpler solutions exist (proper group permissions)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- SGID Detailed Explanation -->
+                    <div style="background: linear-gradient(135deg, #f0fff0, #e6ffe6); border: 2px solid #27ae60; border-radius: 15px; padding: 25px;">
+                        <h3 style="color: #27ae60; margin-bottom: 15px;">👥 SGID (Set Group ID) - The Team Collaborator</h3>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">🤔 What Problem Does SGID Solve?</h4>
+                            <p style="color: #34495e; line-height: 1.6;">Your development team shares a project directory. Without SGID, files created by different team members belong to their individual groups, making collaboration messy. SGID ensures all files inherit the project's group ownership.</p>
+                        </div>
+
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">📋 SGID Use Cases:</h4>
+                            <ul style="color: #34495e; line-height: 1.6;">
+                                <li><strong style="color: #2c3e50;">Project Directories</strong> - Team members create files with shared group ownership</li>
+                                <li><strong style="color: #2c3e50;">Mail Directories</strong> - /var/mail ensures mail files have correct group</li>
+                                <li><strong style="color: #2c3e50;">Shared Applications</strong> - Programs that need group-level access to resources</li>
+                                <li><strong style="color: #2c3e50;">Web Directories</strong> - Files created by web server maintain proper group ownership</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">🎯 Perfect SGID Setup Example:</h4>
+                            <div class="command-example" style="background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace;">
+                                # Create shared project directory<br>
+                                mkdir /shared/webdev<br>
+                                chgrp developers /shared/webdev<br>
+                                chmod 2775 /shared/webdev    # SGID + group write access<br><br>
+                                
+                                # Now ANY team member's files inherit 'developers' group!<br>
+                                # Alice creates: touch /shared/webdev/index.html  → group: developers<br>
+                                # Bob creates:   touch /shared/webdev/style.css  → group: developers
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sticky Bit Detailed Explanation -->
+                    <div style="background: linear-gradient(135deg, #fffaf0, #fff4e6); border: 2px solid #f39c12; border-radius: 15px; padding: 25px;">
+                        <h3 style="color: #f39c12; margin-bottom: 15px;">🏷️ Sticky Bit - The Deletion Protector</h3>
+                        
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">🤔 What Problem Does Sticky Bit Solve?</h4>
+                            <p style="color: #34495e; line-height: 1.6;">You have a shared directory where everyone can create files, but you don't want users deleting each other's files. The sticky bit ensures only the file owner (or root) can delete their own files, even in world-writable directories.</p>
+                        </div>
+
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">📋 Sticky Bit Use Cases:</h4>
+                            <ul style="color: #34495e; line-height: 1.6;">
+                                <li><strong style="color: #2c3e50;">/tmp Directory</strong> - Users can create temp files but can't delete others' files</li>
+                                <li><strong style="color: #2c3e50;">Public Upload Directories</strong> - Users can upload but can't delete others' uploads</li>
+                                <li><strong style="color: #2c3e50;">Shared Scratch Space</strong> - Everyone can write, but only owners can delete</li>
+                                <li><strong style="color: #2c3e50;">Student Directories</strong> - In educational environments for homework submissions</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <h4 style="color: #2c3e50; margin-bottom: 10px;">🎯 Real-World Sticky Bit Example:</h4>
+                            <div class="command-example" style="background: #2c3e50; color: #ecf0f1; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace;">
+                                # Look at /tmp - the classic sticky bit example<br>
+                                ls -ld /tmp<br>
+                                drwxrwxrwt 15 root root 4096 Dec 21 10:30 /tmp<br><br>
+                                
+                                # What this means:<br>
+                                # - Everyone can read, write, execute (rwxrwxrwx)<br>
+                                # - BUT the 't' means only file owners can delete their files<br>
+                                # - User1 can create /tmp/user1_file<br>
+                                # - User2 CANNOT delete /tmp/user1_file (even though /tmp is world-writable!)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="command-showcase" id="special-example" style="display: none;">
+                <div class="command-title" id="special-title">Click a special permission above to see examples</div>
+                <div class="command-example" id="special-commands">
+                    Select a special permission card above to see practical examples and commands.
+                </div>
+            </div>
+
+            <div class="security-warning">
+                <h3>⚠️ Security Best Practices for Special Permissions</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                    <div>
+                        <h4 style="color: #e74c3c;">🚨 Security Risks:</h4>
+                        <ul>
+                            <li><strong>SUID Files:</strong> Can be exploited for privilege escalation</li>
+                            <li><strong>World-writable SUID:</strong> Anyone can modify and gain privileges</li>
+                            <li><strong>SUID Scripts:</strong> Shell scripts with SUID are dangerous</li>
+                            <li><strong>Unnecessary SGID:</strong> Can lead to unintended file access</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: #27ae60;">✅ Security Measures:</h4>
+                        <ul>
+                            <li><strong>Regular Audits:</strong> <code>find / -perm -4000 2>/dev/null</code></li>
+                            <li><strong>Minimal Use:</strong> Only when absolutely necessary</li>
+                            <li><strong>Proper Ownership:</strong> Ensure correct user/group ownership</li>
+                            <li><strong>Monitor Changes:</strong> Alert on new SUID files</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security & Tips Tab -->
+        <div id="security" class="tab-content">
+            <h2 style="color: #2c3e50; margin-bottom: 30px;">🔒 Security Best Practices & Pro Tips</h2>
+
+            <div class="best-practices">
+                <h3>✅ Permission Best Practices</h3>
+                <div style="margin-top: 15px;">
+                    <strong>🎯 Common Permission Patterns:</strong>
+                    <ul style="margin: 10px 0;">
+                        <li><code>644</code> - Regular files (rw-r--r--): Owner can read/write, others can read</li>
+                        <li><code>755</code> - Executable files & directories (rwxr-xr-x): Standard access pattern</li>
+                        <li><code>600</code> - Private files (rw-------): Only owner can access</li>
+                        <li><code>700</code> - Private directories (rwx------): Owner-only access</li>
+                        <li><code>775</code> - Group collaboration (rwxrwxr-x): Team write access</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="security-warning">
+                <h3>🚨 Security Threats & Prevention</h3>
+                <div style="margin-top: 15px;">
+                    <strong>⚠️ Common Vulnerabilities:</strong>
+                    <ul style="margin: 10px 0;">
+                        <li><strong>777 Permissions:</strong> World-writable files = security risk</li>
+                        <li><strong>Unmonitored SUID:</strong> Can lead to privilege escalation</li>
+                        <li><strong>Weak umask:</strong> Default 022 may be too permissive</li>
+                        <li><strong>Group writable configs:</strong> System files should not be group-writable</li>
+                    </ul>
+
+                    <strong>🛡️ Prevention Commands:</strong>
+                    <div class="command-example" style="background: rgba(231, 76, 60, 0.1); border-color: #e74c3c;">
+                        # Find dangerous permissions<br>
+                        find /home -perm 777 -type f 2>/dev/null<br>
+                        find / -perm -4000 -user root 2>/dev/null<br>
+                        find /etc -perm -002 -type f 2>/dev/null<br><br>
+                        
+                        # Set secure umask<br>
+                        umask 0077    # Very restrictive<br>
+                        umask 0022    # Standard security<br><br>
+                        
+                        # Audit file changes<br>
+                        find /etc -newer /tmp/baseline -type f
+                    </div>
+                </div>
+            </div>
+
+            <div class="command-showcase">
+                <div class="command-title">🎓 Pro Tips & Troubleshooting</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                    <div>
+                        <h4 style="color: #27ae60; margin-bottom: 10px;">✅ Quick Fixes</h4>
+                        <div class="command-example">
+                            # Fix "Permission denied" on script<br>
+                            chmod +x script.sh<br><br>
+                            
+                            # Fix directory access<br>
+                            chmod 755 directory<br><br>
+                            
+                            # Restore default permissions<br>
+                            chmod 644 *.txt<br>
+                            chmod 755 */
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 style="color: #3498db; margin-bottom: 10px;">🔍 Diagnostic Commands</h4>
+                        <div class="command-example">
+                            # Check file details<br>
+                            stat filename<br><br>
+                            
+                            # Test permissions<br>
+                            sudo -u user test -r file<br><br>
+                            
+                            # Check effective permissions<br>
+                            namei -l /path/to/file
+                        </div>
+                    </div>
+                </div>
+
+                <h4 style="color: #e67e22; margin: 20px 0 10px 0;">⚡ Advanced Techniques</h4>
+                <div class="command-example">
+                    # Conditional execute permission (X vs x)<br>
+                    chmod -R u+rwX /project    # X only adds execute if already set or directory<br><br>
+                    
+                    # Backup permissions before changes<br>
+                    getfacl -R /project > permissions_backup<br>
+                    setfacl --restore=permissions_backup<br><br>
+                    
+                    # Find files by permission pattern<br>
+                    find . -perm /222 -type f    # Find any writable files<br>
+                    find . ! -perm -444 -type f  # Find non-readable files
+                </div>
+            </div>
+
+            <div class="interactive-calculator" style="background: linear-gradient(135deg, #fff5f5, #ffe6e6); border-color: #e74c3c;">
+                <div class="calc-title" style="color: #e74c3c;">🚨 Common Permission Problems</div>
+                
+                <div style="text-align: left; max-width: 600px; margin: 0 auto;">
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h4 style="color: #e74c3c;">❌ Problem: "Permission denied" when running script</h4>
+                        <p><strong>Cause:</strong> Missing execute permission</p>
+                        <p><strong>Solution:</strong> <code>chmod +x script.sh</code></p>
+                    </div>
+
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h4 style="color: #e74c3c;">❌ Problem: Can't access files in directory</h4>
+                        <p><strong>Cause:</strong> Directory lacks execute permission</p>
+                        <p><strong>Solution:</strong> <code>chmod +x directory</code></p>
+                    </div>
+
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h4 style="color: #e74c3c;">❌ Problem: New files have wrong group</h4>
+                        <p><strong>Cause:</strong> Directory needs SGID bit</p>
+                        <p><strong>Solution:</strong> <code>chmod g+s directory</code></p>
+                    </div>
+
+                    <div style="background: white; padding: 20px; border-radius: 10px; margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h4 style="color: #e74c3c;">❌ Problem: Users delete each other's files in shared folder</h4>
+                        <p><strong>Cause:</strong> Missing sticky bit</p>
+                        <p><strong>Solution:</strong> <code>chmod +t directory</code></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="best-practices">
+                <h3>🎯 LPIC-1 Exam Tips</h3>
+                <ul>
+                    <li><strong>Memory Aid:</strong> "Read=4, Write=2, eXecute=1" (r-w-x = 4-2-1)</li>
+                    <li><strong>Quick Check:</strong> Odd numbers (1,3,5,7) = executable permissions</li>
+                    <li><strong>Directory Rule:</strong> Always remember 'x' needed to enter directories</li>
+                    <li><strong>Special Permissions:</strong> 4=SUID, 2=SGID, 1=Sticky (just like rwx!)</li>
+                    <li><strong>Safety First:</strong> Test with non-critical files before exam</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected tab and mark button as active
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Add fade-in animation
+            document.getElementById(tabName).classList.add('fade-in');
+            setTimeout(() => {
+                document.getElementById(tabName).classList.remove('fade-in');
+            }, 600);
+        }
+
+        // Tooltip functionality - Clean implementation with data attributes
+        let currentTooltip = null;
+        let tooltipTimeout = null;
+
+        function showTooltip(element, text) {
+            const tooltip = document.getElementById('tooltip');
+            
+            // Clear any existing timeout
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+            
+            // Store current tooltip reference
+            currentTooltip = element;
+            
+            // Convert pipe-separated text to HTML with bullet points
+            const formattedText = text.split('|').map((line, index) => {
+                if (index === 0) {
+                    return `<strong style="color: #3498db;">${line}</strong>`;
+                } else {
+                    return line.replace('&bull;', '•');
+                }
+            }).join('<br>');
+            
+            tooltip.innerHTML = formattedText;
+            tooltip.style.display = 'block';
+            tooltip.style.opacity = '0';
+            
+            const rect = element.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            // Position tooltip above the element
+            tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2) - (tooltip.offsetWidth / 2)) + 'px';
+            tooltip.style.top = (rect.top + scrollTop - tooltip.offsetHeight - 15) + 'px';
+            
+            // Ensure tooltip stays within viewport
+            const tooltipRect = tooltip.getBoundingClientRect();
+            if (tooltipRect.left < 0) {
+                tooltip.style.left = '10px';
+            }
+            if (tooltipRect.right > window.innerWidth) {
+                tooltip.style.left = (window.innerWidth - tooltip.offsetWidth - 10) + 'px';
+            }
+            
+            // Fade in animation
+            tooltip.style.transition = 'opacity 0.3s ease';
+            tooltip.style.opacity = '1';
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.opacity = '0';
+            setTimeout(() => {
+                tooltip.style.display = 'none';
+            }, 300);
+            currentTooltip = null;
+        }
+
+        function startHideTimer() {
+            tooltipTimeout = setTimeout(() => {
+                hideTooltip();
+            }, 500);
+        }
+
+        // Add event listeners to all clickable parts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const clickableParts = document.querySelectorAll('.clickable-part');
+            
+            clickableParts.forEach(element => {
+                const tooltipText = element.getAttribute('data-tooltip');
+                
+                if (tooltipText) {
+                    // Show tooltip on mouse enter
+                    element.addEventListener('mouseenter', function() {
+                        showTooltip(this, tooltipText);
+                    });
+
+                    // Start hide timer on mouse leave
+                    element.addEventListener('mouseleave', function() {
+                        startHideTimer();
+                    });
+
+                    // Show tooltip on click as well
+                    element.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        showTooltip(this, tooltipText);
+                        if (tooltipTimeout) {
+                            clearTimeout(tooltipTimeout);
+                            tooltipTimeout = null;
+                        }
+                    });
+                }
+            });
+
+            // Keep tooltip visible when hovering over it
+            const tooltip = document.getElementById('tooltip');
+            if (tooltip) {
+                tooltip.addEventListener('mouseenter', function() {
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = null;
+                    }
+                });
+
+                tooltip.addEventListener('mouseleave', function() {
+                    startHideTimer();
+                });
+            }
+
+            // Initialize calculator
+            updateCalculator();
+        });
+
+        // Hide tooltip when clicking elsewhere
+        document.addEventListener('click', function(event) {
+            if (!event.target.classList.contains('clickable-part') && 
+                !event.target.closest('#tooltip')) {
+                hideTooltip();
+            }
+        });
+
+        // Animate permission cards
+        function animateCard(card) {
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                card.style.transform = 'translateY(-5px)';
+            }, 150);
+        }
+
+        // Permission calculator
+        function updateCalculator() {
+            let user = 0, group = 0, others = 0;
+            let symbolic = '-';
+            
+            // Calculate user permissions
+            if (document.getElementById('u-r').checked) user += 4;
+            if (document.getElementById('u-w').checked) user += 2;
+            if (document.getElementById('u-x').checked) user += 1;
+            
+            // Calculate group permissions
+            if (document.getElementById('g-r').checked) group += 4;
+            if (document.getElementById('g-w').checked) group += 2;
+            if (document.getElementById('g-x').checked) group += 1;
+            
+            // Calculate others permissions
+            if (document.getElementById('o-r').checked) others += 4;
+            if (document.getElementById('o-w').checked) others += 2;
+            if (document.getElementById('o-x').checked) others += 1;
+            
+            // Build symbolic representation
+            symbolic += (document.getElementById('u-r').checked ? 'r' : '-');
+            symbolic += (document.getElementById('u-w').checked ? 'w' : '-');
+            symbolic += (document.getElementById('u-x').checked ? 'x' : '-');
+            symbolic += (document.getElementById('g-r').checked ? 'r' : '-');
+            symbolic += (document.getElementById('g-w').checked ? 'w' : '-');
+            symbolic += (document.getElementById('g-x').checked ? 'x' : '-');
+            symbolic += (document.getElementById('o-r').checked ? 'r' : '-');
+            symbolic += (document.getElementById('o-w').checked ? 'w' : '-');
+            symbolic += (document.getElementById('o-x').checked ? 'x' : '-');
+            
+            const octal = `${user}${group}${others}`;
+            
+            document.getElementById('calc-result').innerHTML = `
+                Symbolic: ${symbolic}<br>
+                Octal: ${octal}<br>
+                Command: chmod ${octal} filename
+            `;
+        }
+
+        // Set common permission patterns
+        function setCommonPermission(perm) {
+            // Clear all checkboxes first
+            document.querySelectorAll('#calculator input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            const permStr = perm.toString();
+            const userPerm = parseInt(permStr[0]);
+            const groupPerm = parseInt(permStr[1]);
+            const otherPerm = parseInt(permStr[2]);
+            
+            // Set user permissions
+            if (userPerm & 4) document.getElementById('u-r').checked = true;
+            if (userPerm & 2) document.getElementById('u-w').checked = true;
+            if (userPerm & 1) document.getElementById('u-x').checked = true;
+            
+            // Set group permissions
+            if (groupPerm & 4) document.getElementById('g-r').checked = true;
+            if (groupPerm & 2) document.getElementById('g-w').checked = true;
+            if (groupPerm & 1) document.getElementById('g-x').checked = true;
+            
+            // Set others permissions
+            if (otherPerm & 4) document.getElementById('o-r').checked = true;
+            if (otherPerm & 2) document.getElementById('o-w').checked = true;
+            if (otherPerm & 1) document.getElementById('o-x').checked = true;
+            
+            updateCalculator();
+        }
+
+        // chmod animation demo
+        function startChmodDemo() {
+            const before = document.getElementById('demo-before');
+            const after = document.getElementById('demo-after');
+            
+            before.classList.add('highlight');
+            setTimeout(() => {
+                before.classList.remove('highlight');
+                after.classList.add('highlight');
+                setTimeout(() => {
+                    after.classList.remove('highlight');
+                }, 1000);
+            }, 1000);
+        }
+
+        // Show special permission examples
+        function showSpecialExample(type) {
+            const exampleDiv = document.getElementById('special-example');
+            const titleDiv = document.getElementById('special-title');
+            const commandsDiv = document.getElementById('special-commands');
+            
+            exampleDiv.style.display = 'block';
+            
+            const examples = {
+                suid: {
+                    title: '🔐 SUID Examples & Commands',
+                    commands: `# Real-world SUID example: passwd command<br>
+ls -l /usr/bin/passwd<br>
+-rwsr-xr-x 1 root root 59640 Mar 22 2019 /usr/bin/passwd<br><br>
+
+# Set SUID on a file<br>
+chmod u+s script.sh        # Symbolic method<br>
+chmod 4755 script.sh       # Octal method (4 + 755)<br><br>
+
+# Remove SUID<br>
+chmod u-s script.sh        # Symbolic method<br>
+chmod 0755 script.sh       # Octal method<br><br>
+
+# Find all SUID files (security audit)<br>
+find / -perm -4000 -type f 2>/dev/null<br><br>
+
+⚠️ Security Note: SUID allows users to run files with owner privileges!`
+                },
+                sgid: {
+                    title: '👥 SGID Examples & Commands',
+                    commands: `# SGID on files - run as file's group<br>
+chmod g+s script.sh        # Set SGID on file<br>
+chmod 2755 script.sh       # Octal method (2 + 755)<br><br>
+
+# SGID on directories - new files inherit directory group<br>
+mkdir /shared/project<br>
+chgrp developers /shared/project<br>
+chmod g+s /shared/project       # Set SGID<br>
+chmod 2775 /shared/project      # Alternative: octal<br><br>
+
+# Test SGID behavior<br>
+cd /shared/project<br>
+touch newfile.txt<br>
+ls -l newfile.txt           # Will show 'developers' group<br><br>
+
+# Find SGID files and directories<br>
+find / -perm -2000 2>/dev/null<br><br>
+
+💡 Perfect for team collaboration directories!`
+                },
+                sticky: {
+                    title: '🏷️ Sticky Bit Examples & Commands',
+                    commands: `# Classic example: /tmp directory<br>
+ls -ld /tmp<br>
+drwxrwxrwt 15 root root 4096 Sep 22 15:28 /tmp<br><br>
+
+# Set sticky bit on directory<br>
+chmod +t /shared/temp       # Symbolic method<br>
+chmod 1777 /shared/temp     # Octal method (1 + 777)<br><br>
+
+# Test sticky bit behavior<br>
+# User1 creates file: touch /shared/temp/user1_file<br>
+# User2 cannot delete: rm /shared/temp/user1_file  # Permission denied<br>
+# Only user1 (or root) can delete their own files<br><br>
+
+# Remove sticky bit<br>
+chmod -t /shared/temp       # Symbolic method<br>
+chmod 0777 /shared/temp     # Octal method<br><br>
+
+# Find sticky bit directories<br>
+find / -perm -1000 -type d 2>/dev/null<br><br>
+
+🔒 Essential for secure shared directories!`
+                }
+            };
+            
+            titleDiv.textContent = examples[type].title;
+            commandsDiv.innerHTML = examples[type].commands;
+            
+            // Scroll to example
+            exampleDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Initialize calculator
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCalculator();
+        });
+    </script>
+</body>
+</html>
